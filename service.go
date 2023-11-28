@@ -1,13 +1,24 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
 )
 
-const expectedToken = "4321" // Здесь ваш константный токен
+const (
+	expectedToken = "4321"
+	updateURL     = "http://127.0.0.1:8000/expedition/update_async/"
+)
+
+type ExpeditionResult struct {
+	ExpID  string `json:"exp_id"`
+	Result string `json:"result"`
+	Token  string `json:"token"`
+}
 
 func main() {
 	http.HandleFunc("/archive", handleProcess)
@@ -16,40 +27,60 @@ func main() {
 }
 
 func handleProcess(w http.ResponseWriter, r *http.Request) {
-	// Проверка метода запроса (должен быть POST)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Метод не разрешен", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Получение параметров exp_id и token из запроса
 	expID := r.FormValue("exp_id")
 	token := r.FormValue("token")
 	fmt.Println(expID, token)
 
-	// Проверка наличия токена и его соответствия ожидаемому
 	if token == "" || token != expectedToken {
 		http.Error(w, "Токены не совпадают", http.StatusForbidden)
 		fmt.Println("Токены не совпадают")
 		return
 	}
 
-	// Отправить статус 200 (OK) после проверок
 	w.WriteHeader(http.StatusOK)
 
-	// Выполнение операции в фоновом режиме
 	go func() {
-		// Имитация задержки выполнения в горутине
 		delay := 10
 		time.Sleep(time.Duration(delay) * time.Second)
 
-		// Генерация случайного результата
-		result := fmt.Sprintf("Проверка в архиве прошла успешно для экспедиции с ID: %s", expID)
+		result := "Проверка  для экспедиции в архиве прошла успешно"
 		if rand.Intn(2) == 0 {
-			result = fmt.Sprintf("Проверка в архиве прошла неуспешно для экспедиции с ID: %s", expID)
+			result = "Проверка для экспедиции в архиве прошла неуспешно"
 		}
 
-		// Вывод результата в консоль
-		fmt.Printf("Processed with result: %s\n", result)
+		// Отправка результата на другой сервер
+		expResult := ExpeditionResult{
+			ExpID:  expID,
+			Result: result,
+			Token:  token,
+		}
+		fmt.Println("json", expResult)
+		jsonValue, err := json.Marshal(expResult)
+		if err != nil {
+			fmt.Println("Ошибка при маршализации JSON:", err)
+			return
+		}
+
+		req, err := http.NewRequest(http.MethodPut, updateURL, bytes.NewBuffer(jsonValue))
+		if err != nil {
+			fmt.Println("Ошибка при создании запроса на обновление:", err)
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Ошибка при отправке запроса на обновление:", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		fmt.Println("Ответ от сервера обновления:", resp.Status)
 	}()
 }
