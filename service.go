@@ -57,7 +57,7 @@ func handleProcess(w http.ResponseWriter, r *http.Request) {
 		expResult := ExpeditionResult{
 			ExpID:  expID,
 			Result: result,
-			Token:  token,
+			// Token:  token,
 		}
 		fmt.Println("json", expResult)
 		jsonValue, err := json.Marshal(expResult)
