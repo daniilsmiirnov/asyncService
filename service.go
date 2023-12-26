@@ -33,14 +33,14 @@ func handleProcess(w http.ResponseWriter, r *http.Request) {
 	}
 
 	expID := r.FormValue("exp_id")
-	token := r.FormValue("token")
-	fmt.Println(expID, token)
+	// token := r.FormValue("token")
+	fmt.Println(expID)
 
-	if token == "" || token != expectedToken {
-		http.Error(w, "Токены не совпадают", http.StatusForbidden)
-		fmt.Println("Токены не совпадают")
-		return
-	}
+	// if token == "" || token != expectedToken {
+	// 	http.Error(w, "Токены не совпадают", http.StatusForbidden)
+	// 	fmt.Println("Токены не совпадают")
+	// 	return
+	// }
 
 	w.WriteHeader(http.StatusOK)
 
@@ -57,7 +57,7 @@ func handleProcess(w http.ResponseWriter, r *http.Request) {
 		expResult := ExpeditionResult{
 			ExpID:  expID,
 			Result: result,
-			// Token:  token,
+			Token:  expectedToken,
 		}
 		fmt.Println("json", expResult)
 		jsonValue, err := json.Marshal(expResult)
