@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	expectedToken = "4321"
+	expectedToken = "7a4f891b2e613dca"
 	updateURL     = "http://127.0.0.1:8000/expedition/update_async/"
 )
 
